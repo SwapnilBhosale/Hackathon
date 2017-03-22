@@ -29,6 +29,10 @@ class Products(mysql.Model):
 def hello():  
     return "Hello World!"
 
+@application.route("/test")
+def test():  
+    return "Testing"
+
 @application.route('/product', methods=['POST'])
 def createProduct():
 
