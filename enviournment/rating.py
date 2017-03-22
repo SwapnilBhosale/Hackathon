@@ -29,9 +29,18 @@ class Products(mysql.Model):
 def hello():  
     return "Hello World!"
 
-@application.route("/test")
+@application.route("/test", methods=['POST'])
 def test():  
-    return "Testing"
+    content = (request.get_json(silent=True)["result"])
+    print(content["action"])
+    d = []
+    def generateResponse(msg):
+        return jsonify({"speech":msg,  "displayText":msg})
+          
+    if content["action"] == "getLunchMenu":
+        return generateResponse("rice available")
+        
+    return "action not recognized"
 
 @application.route('/product', methods=['POST'])
 def createProduct():
