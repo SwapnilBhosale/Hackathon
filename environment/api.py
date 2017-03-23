@@ -25,48 +25,28 @@ class Products(mysql.Model):
     def __repr__(self):
         return '<Products (%s, %s) >' % (self.rate, self.name)
 
-@application.route("/")
-def hello():  
-    return "Hello World!"
-
 @application.route("/test", methods=['POST'])
 def test():  
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-    def generateResponse(msg):
+    def generateResponse(msg)
         return jsonify({"speech":msg,  "displayText":msg})
           
     if content["action"] == "getLunchMenu":
-        return generateResponse("rice available")
+        return generateResponse("There's rice, chappatis, daal, mithai. Like it?")
+    if content["action"] == "getSnacksMenu":
+        return generateResponse("There's Poha. Like it?")
+    if content["action"] == "makeACall":
+        return generateResponse("CallConfirmed")
+    if content["action"] == "bookingConfirmed":
+        bookLunch(no=2)
+        return generateResponse("A booking mail has been sent")
         
     return "action not recognized"
 
-@application.route('/product', methods=['POST'])
-def createProduct():
-
-    print('inside product')
-    # fetch name and rate from the request
-    rate = request.get_json()["rate"]
-    name = request.get_json()["name"]
-
-    print('name '+name+' , rate : '+rate)
-    product = Products(rate=rate, name=name) #prepare query statement
-
-    curr_session = mysql.session #open database session
-    try:
-        curr_session.add(product) #add prepared statment to opened session
-        curr_session.commit() #commit changes
-    except:
-        curr_session.rollback()
-        curr_session.flush() # for resetting non-commited .add()
-
-    productId = product.id #fetch last inserted id
-    data = Products.query.filter_by(id=productId).first() #fetch our inserted product
-
-    result = [data.name, data.rate] #prepare visual data
-
-    return jsonify(session=result)
+def booklunch(no):
+    sendMail()
 
 if __name__ == "__main__":  
     application.run(host='0.0.0.0')
