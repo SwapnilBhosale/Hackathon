@@ -30,8 +30,16 @@ def test():
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-    def generateResponse(msg)
-        return jsonify({"speech":msg,  "displayText":msg})
+    def generateResponse(msg,source,data):
+        data = {
+            "speech" : msg,
+            "displayText" : msg
+        }
+        if(source):
+            data["source"] = source;
+        if(data):
+            data["data"] = data;
+        return jsonify(data)
           
     if content["action"] == "getLunchMenu":
         return generateResponse("There's rice, chappatis, daal, mithai. Like it?")
@@ -42,6 +50,9 @@ def test():
     if content["action"] == "bookingConfirmed":
         bookLunch(no=2)
         return generateResponse("A booking mail has been sent")
+    if content["action"] == "doWebRtcCall" :
+        #to do compare here name with the email ID and send email Id a data param
+        return generateResponse("Call has been placed","call",{"to":"abhijeet.bhagat@gslab.com"})
         
     return "action not recognized"
 
