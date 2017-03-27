@@ -1,29 +1,21 @@
-import configparser  
-from flask.ext.sqlalchemy import SQLAlchemy  
+#import configparser  
+#from flask.ext.sqlalchemy import SQLAlchemy  
 from flask import Flask, jsonify, request
 
 application = Flask(__name__)
 
 # Read config file
-config = configparser.ConfigParser()  
-config.read('rating_db.conf')
+#config = configparser.ConfigParser()  
+#config.read('rating_db.conf')
 
 # MySQL configurations
-application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + '/' + config.get('DB', 'db') 
-print(' Config : '+application.config['SQLALCHEMY_DATABASE_URI'])
-application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+#application.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://' + config.get('DB', 'user') + ':' + config.get('DB', 'password') + '@' + config.get('DB', 'host') + '/' + config.get('DB', 'db') 
+#print(' Config : '+application.config['SQLALCHEMY_DATABASE_URI'])
+#application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-mysql = SQLAlchemy()
+#mysql = SQLAlchemy()
 
 # map models
-class Products(mysql.Model):  
-    __tablename__ = 'products'
-    id = mysql.Column(mysql.Integer, primary_key=True)
-    rate = mysql.Column(mysql.Integer, nullable=False)
-    name = mysql.Column(mysql.String(128), nullable=False)
-
-    def __repr__(self):
-        return '<Products (%s, %s) >' % (self.rate, self.name)
 
 @application.route("/test", methods=['POST'])
 def test():  
