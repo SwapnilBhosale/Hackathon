@@ -22,15 +22,15 @@ def test():
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-    def generateResponse(msg,source,data):
+    def generateResponse(msg,source,resData):
         data = {
             "speech" : msg,
             "displayText" : msg
         }
         if(source):
             data["source"] = source;
-        if(data):
-            data["data"] = data;
+        if(resData):
+            data["data"] = resData;
         return jsonify(data)
           
     if content["action"] == "getLunchMenu":
