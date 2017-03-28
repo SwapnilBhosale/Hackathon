@@ -47,16 +47,12 @@ def send_invite(param):
     replaced_contents = replaced_contents.replace('subject',  param['subject'])
     part_email = MIMEText(replaced_contents,'calendar;method=REQUEST')
 
-    
     msgAlternative = MIMEMultipart('alternative')
-   
     
     ical_atch = MIMEBase('text/calendar',' ;name="%s"'%"invitation.ics")
     ical_atch.set_payload(replaced_contents)
     Encoders.encode_base64(ical_atch)
     ical_atch.add_header('Content-Disposition', 'attachment; filename="%s"'%f)
-    
-
     
     msgAlternative.attach(part_email)
     msgAlternative.attach(ical_atch)
@@ -69,5 +65,20 @@ def send_invite(param):
     mailServer.sendmail(fro, param['to'], msg.as_string())
     mailServer.close()
 
+def send_mail(param, subject, body, sender):
+    msg = MIMEText(body)
+    msg['Reply-To']=sender
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
+    msg['From'] = sender
+    msg['To'] = param['to']
+    mailServer = smtplib.SMTP('smtp.gmail.com', 587)
+    mailServer.ehlo()
+    mailServer.starttls()
+    mailServer.ehlo()
+    mailServer.login('abhijeet.bhagat@gslab.com', '')
+    mailServer.sendmail(sender, param['to'], msg.as_string())
+    mailServer.close()
 if __name__ == "__main__" :
-    send_invite({"to":["abhijeet.bhagat@gslab.com"],"subject":"Party reminder","location":"flat","description":"Hangout","meetingStartDate":"20170512T083000Z","meetingEndDate":"20170512T093000Z"})
+    #send_invite({"to":["abhijeet.bhagat@gslab.com"],"subject":"Party reminder","location":"flat","description":"Hangout","meetingStartDate":"20170512T083000Z","meetingEndDate":"20170512T093000Z"})
+    send_mail({'to':'abhijeet.bhagat@gslab.com'}, 'Lets see lights', 'its time!', 'abhijeet.bhagat@gslab.com')

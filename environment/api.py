@@ -1,6 +1,7 @@
 #import configparser  
 #from flask.ext.sqlalchemy import SQLAlchemy  
 from flask import Flask, jsonify, request
+#from mail import send 
 
 application = Flask(__name__)
 
