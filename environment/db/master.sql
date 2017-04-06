@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.17, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.11, for Win64 (x86_64)
 --
 -- Host: localhost    Database: master
 -- ------------------------------------------------------
--- Server version	5.7.17-0ubuntu0.16.04.1
+-- Server version	5.7.11-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -42,6 +42,34 @@ LOCK TABLES `employees` WRITE;
 INSERT INTO `employees` VALUES ('gs-0834','abhijeet','bhagat','abhijeet.bhagat@gslab.com','7767853536','ENGINEERING'),('gs-0913','swapnil','bhosale','swapnil.bhosale@gslab.com','8668243622','ENGINEERING'),('gs-0973','amit','kumar','amit.kumar@gslab.com','9168758443','ENGINEERING');
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `user`
+--
+
+DROP TABLE IF EXISTS `user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `user` (
+  `user_id` int(5) NOT NULL AUTO_INCREMENT,
+  `email` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `password` char(8) NOT NULL,
+  `employee_id` varchar(10) NOT NULL,
+  PRIMARY KEY (`user_id`),
+  KEY `IDX_language_NAME` (`email`),
+  KEY `employee_id` (`employee_id`),
+  CONSTRAINT `user_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `user`
+--
+
+LOCK TABLES `user` WRITE;
+/*!40000 ALTER TABLE `user` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -52,4 +80,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-03-29 13:57:55
+-- Dump completed on 2017-04-06 22:43:03
