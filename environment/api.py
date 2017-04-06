@@ -41,6 +41,7 @@ def test():
         return generateResponse("A booking mail has been sent")
     if content["action"] == "doWebRtcCall" :
         #to do compare here name with the email ID and send email Id a data param
+	#return get_mail_id(content["action"]["parameters"])
         return generateResponse("Call has been placed","call",{"to":"abhijeet.bhagat@gslab.com"})
         
     return "action not recognized"
@@ -52,6 +53,9 @@ def get_lunch_items():
     cursor.execute("select items from lunch_items where items_date = CURDATE()")
     data = cursor.fetchone()
     return jsonify(data)
-    
+
+def get_mail_id(value):
+    cursor = mysql.connect().cursor()
+    cursor.execute('select * from employees where first_name like %i'+value['given-name']+'%')
 if __name__ == "__main__":  
     app.run(host='0.0.0.0')
