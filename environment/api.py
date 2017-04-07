@@ -53,7 +53,7 @@ def get_lunch_items():
     cursor = mysql.connect().cursor()
     cursor.execute("select items from lunch_items where items_date = CURDATE()")
     data = cursor.fetchone()
-    return jsonify(data)
+    return generateResponse("Theres ", "show", {"list": data})
 
 def get_mail_id(content):
     name = content["parameters"]["name"]
