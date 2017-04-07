@@ -2,7 +2,8 @@
 #from flask.ext.sqlalchemy import SQLAlchemy  
 from flask import Flask, jsonify, request
 from flaskext.mysql import MySQL
-#from mail import send 
+#from mail import send
+import  json
 
 app= Flask(__name__)
 
@@ -13,6 +14,27 @@ app.config['MYSQL_DATABASE_PASSWORD'] = 'root'
 app.config['MYSQL_DATABASE_DB'] = 'master'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
+
+@app.route('/login', methods = ['POST'])
+def login():
+    _email = request.form['email']
+    _password = request.form['password']
+    cursor = mysql.connect().cursor()
+    cursor.execute("select e.first_name,e.last_name from employees e,user u where u.email = '"+_email+"' AND u.password = '"+_password+"' AND e.employee_id=u.employee_id");
+    data = cursor.fetchone();
+    returnData = None
+    if(data) :
+        returnData = {
+            "status" : True,
+            "data" : data
+        }
+    else :
+        returnData = {
+            "status" : False,
+            "errorMessage" : "Wrong username or password"
+        }
+    return jsonify(returnData)
+
 
 @app.route("/test", methods=['POST'])
 def test():  
@@ -59,3 +81,5 @@ def get_mail_id(value):
     cursor.execute('select * from employees where first_name like %i'+value['given-name']+'%')
 if __name__ == "__main__":  
     app.run(host='0.0.0.0')
+
+
