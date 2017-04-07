@@ -33,7 +33,6 @@ def test():
     if content["action"] == "doWebRtcCall" :
         #to do compare here name with the email ID and send email Id a data param
         return get_mail_id(content)
-	      #return get_mail_id(content["action"]["parameters"])
     return "action not recognized"
 
 def generateResponse(msg,source,resData):
@@ -46,8 +45,10 @@ def generateResponse(msg,source,resData):
     if(resData):
       data["data"] = resData;
   return jsonify(data)
+
 def booklunch(no):
     sendMail()
+
 def get_lunch_items():
     cursor = mysql.connect().cursor()
     cursor.execute("select items from lunch_items where items_date = CURDATE()")
@@ -64,7 +65,6 @@ def get_mail_id(content):
     else:
       email = cursor.fetchone()
       return generateResponse("Call has been placed","call",{"to":email})
-
 
 if __name__ == "__main__":  
     app.run(host='0.0.0.0')
