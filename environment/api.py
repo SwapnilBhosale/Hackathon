@@ -24,7 +24,7 @@ def test():
     if content["action"] == "getLunchMenu":
         return get_lunch_items()
     if content["action"] == "getSnacksMenu":
-        return generateResponse("There's Poha. Like it?")
+        return get_snacks_items()
     if content["action"] == "makeACall":
         return generateResponse("CallConfirmed")
     if content["action"] == "bookingConfirmed":
@@ -53,7 +53,13 @@ def get_lunch_items():
     cursor = mysql.connect().cursor()
     cursor.execute("select items from lunch_items where items_date = CURDATE()")
     data = cursor.fetchone()
-    return generateResponse("Theres ", "show", {"list": data})
+    return generateResponse("Theres " + data[0], "show", {"list": data})
+
+def get_snacks_items():
+    cursor = mysql.connect().cursor()
+    cursor.execute("select snacks from lunch_items where items_date = CURDATE()")
+    data = cursor.fetchone()
+    return generateResponse("Theres " + data[0], "show", {"list": data})
 
 def get_mail_id(content):
     name = content["parameters"]["name"]
