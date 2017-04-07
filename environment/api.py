@@ -58,13 +58,13 @@ def get_lunch_items():
 def get_mail_id(content):
     name = content["parameters"]["name"]
     cursor = mysql.connect().cursor()
-    num = cursor.execute('select email from employees where first_name like "%'+name+'%"')
+    num = cursor.execute('select email, first_name, last_name from employees where first_name like "%'+name+'%"')
     if (num > 2):
       print("call ml")
-      return generateResponse("Did you mean... ?","call",{"to":"null"})
+      return generateResponse("Did you mean... ?","call",{"to":"null", "name": "null"})
     else:
-      email = cursor.fetchone()
-      return generateResponse("Call has been placed","call",{"to":email})
+      data = cursor.fetchone()
+      return generateResponse("Call has been placed","call",{"to":data[0], "name": data[1] + ' ' + data[2]})
 
 if __name__ == "__main__":  
     app.run(host='0.0.0.0')
