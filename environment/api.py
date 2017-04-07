@@ -61,10 +61,13 @@ def get_snacks_items():
     data = cursor.fetchone()
     return generateResponse("Theres " + data[0], "show", {"list": data})
 
+def request_facility():
+    pass
+
 def get_mail_id(content):
     name = content["parameters"]["name"]
     cursor = mysql.connect().cursor()
-    num = cursor.execute('select email, first_name, last_name from employees where first_name like "%'+name+'%"')
+    num = cursor.execute('select email, first_name, last_name from employees where first_name like "%'+name+'%" or last_name like "%'+name+'%"')
     if (num > 2):
       print("call ml")
       return generateResponse("Did you mean... ?","call",{"to":"null", "name": "null"})
