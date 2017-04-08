@@ -90,7 +90,10 @@ def test():
         return bookLunch()
 
     if content["action"] == "getSnacksMenu":
+      if sid in session:
         return get_snacks_items()
+      else:
+        return generateResponse("Not Logged in", "", {})
     if content["action"] == "makeACall":
         return generateResponse("CallConfirmed")
     if content["action"] == "bookingConfirmed":
@@ -107,6 +110,8 @@ def test():
         return apply_leaves(content)
     if content["action"] == "applyODs":
         return apply_ods(content)
+    if content["action"] == "getBestWeekend":
+        return get_best_leaves()
     return "action not recognized"
 
 def generateResponse(msg, source, resData):
@@ -257,7 +262,17 @@ def insert_and_send_mail(content, _type, e_type, reason):
     send_mail({'to':session[sid]['email']}, _type + ' application for ' + date, 'Your manager will approve it soon.', 'facilities@gslab.com')
     return generateResponse(_type + ' has been applied for - {}'.format(date), "done", {})
 
-
+def get_best_leaves():
+    cursor = mysql.connect().cursor()
+    cursor.execute(" select * from holidays where DAYNAME(hdate) = 'Friday' or DAYNAME(hdate) = 'Monday';")
+    data = cursor.fetchall()
+    lst = []
+    for t in data:
+      if t[0].weekday() == 4:
+        lst.append(t[0].strftime('%Y-%m-%d') + ' to ' + (t[0] + datetime.timedelta(days=2)).strftime('%Y-%m-%d') + ' - 3 days')
+      else:
+        lst.append((t[0] + datetime.timedelta(days=2)).strftime('%Y-%m-%d') + ' to ' + t[0].strftime('%Y-%m-%d') + ' - 3 days')
+    return generateResponse("Here's what i found - \n{}".format('\n'.join(lst)), '', {})
 
 if __name__ == "__main__":
     app.secret_key = 'super secret key'
