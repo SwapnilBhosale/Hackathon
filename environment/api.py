@@ -87,7 +87,7 @@ def test():
         else:
             return generateResponse("Not Logged in", "", {})
     if content["action"] == "bookLunch":
-        return bookLunch(sid)
+        return bookLunch()
 
     if content["action"] == "getSnacksMenu":
         return get_snacks_items()
@@ -127,23 +127,20 @@ def bookLunch():
     cursor.execute("select items from lunch_items where items_date = CURDATE()")
     items = cursor.fetchone()
     emp_id = session[sid]['emp_id']
-    order = {"timestamp": time.time(), "items":items[0], "num": 1}
+    order = {"timestamp": int(time.time()), "items":items[0], "num": 1}
     userData = mongo.findRecord("food_orders",{"emp_id" : emp_id})
     print userData
     if(userData):
         mongo.update_order("food_orders",order,emp_id)
     else:
-        mongo.insertRecord("food_orders",{"emp_id" : emp_id,"orders":order})
+        mongo.insertRecord("food_orders",{"emp_id" : emp_id,"orders":[order]})
     return generateResponse("Logged in", "", {})
 
 def get_lunch_items():
-    if 'email' in session:
-        cursor = mysql.connect().cursor()
-        cursor.execute("select items from lunch_items where items_date = CURDATE()")
-        data = cursor.fetchone()
-        return generateResponse("Theres " + data[0], "show", {"list": data})
-    else:
-        return generateResponse("Not Logged in","",{})
+    cursor = mysql.connect().cursor()
+    cursor.execute("select items from lunch_items where items_date = CURDATE()")
+    data = cursor.fetchone()
+    return generateResponse("Theres " + data[0], "show", {"list": data})
 
 def get_snacks_items():
     cursor = mysql.connect().cursor()
