@@ -120,7 +120,8 @@ def bookLunch(sid):
         items = cursor.fetchone()
         emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session[sid]["email"]))
         emp_ids = cursor.fetchone()
-        order = {"timestamp": time.time(), "items":items[0], "num": 1}
+        print items
+        order = {"timestamp": time.time(),"items":items[0], "num": 1}
         userData = mongo.findRecord("food_orders",{"emp_id" : emp_ids[0]})
         print userData
         if(userData):
