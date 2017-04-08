@@ -62,10 +62,11 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
+    sid = (request.get_json(silent=True)["session_id"])
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-    sid = content['session_id']
+
     if content["action"] == "getLunchMenu":
         if sid in session:
             return get_lunch_items()
