@@ -36,6 +36,7 @@ def login():
         #session[str(id)]['password'] = request.form['password']
         #session['email'] = request.form['email']
         #session['password'] =  request.form['password']
+        print id
         returnData = {
             "status": True,
             "data": data,
@@ -53,12 +54,15 @@ def login():
 def logout():
     # remove the email from the session if it's there
     sidOrg = (request.get_json(silent=True)['session_id'])
+    print sidOrg
     #content = (request.get_json(silent=True)["result"])
     if sidOrg in session:
         session.pop(sidOrg)
         #session.pop('password')
         #session.pop('sid')
-        return generateResponse("Logged Out successfully","",{})
+        return jsonify({"status":True,"message":"logout successfully"})
+    else:
+        return jsonify({"status":False,"message":"session not found"})
 
 @app.route("/test", methods=['POST'])
 def test():
