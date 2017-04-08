@@ -3,12 +3,11 @@
 from flask import Flask, jsonify, request, session, Session,escape
 import flask
 # from mail import send
-import json
+import json,uuid
 from flask.ext.mysql import MySQL
 
 # from flask_mysql import MySQL
 # from mail import send
-
 app = Flask(__name__)
 mysql = MySQL()
 
@@ -19,20 +18,28 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
 
+
 @app.route('/login', methods=['POST'])
 def login():
-    _email = request.form['email']
-    _password = request.form['password']
+    #content = (request.get_json(silent=True))
+    _email = (request.get_json(silent=True)['email'])
+    _password = (request.get_json(silent=True)['password'])
+    print _email
     cursor = mysql.connect().cursor()
     count = cursor.execute("select e.first_name,e.last_name from employees e,user u where u.email = '" + _email + "' AND u.password = '" + _password + "' AND e.employee_id=u.employee_id");
     data = cursor.fetchone()
     returnData = None
     if (count != 0):
-        session['email'] = request.form['email']
-        session['password'] =  request.form['password']
+        id = uuid.uuid4()
+
+        session[str(id)]={'email' : _email,'password' : _password}
+        #session[str(id)]['password'] = request.form['password']
+        #session['email'] = request.form['email']
+        #session['password'] =  request.form['password']
         returnData = {
             "status": True,
-            "data": data
+            "data": data,
+            "session_id" :  id
         }
     else:
         returnData = {
@@ -42,21 +49,28 @@ def login():
     return jsonify(returnData)
 
 
-@app.route('/logout')
+@app.route('/logout',methods=['POST'])
 def logout():
     # remove the email from the session if it's there
-    session.pop('email')
-    session.pop('password')
-    return generateResponse("Logged Out successfully","",{})
+    sidOrg = (request.get_json(silent=True)['session_id'])
+    #content = (request.get_json(silent=True)["result"])
+    if sidOrg in session:
+        session.pop(sidOrg)
+        #session.pop('password')
+        #session.pop('sid')
+        return generateResponse("Logged Out successfully","",{})
 
 @app.route("/test", methods=['POST'])
 def test():
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-
+    sid = content['session_id']
     if content["action"] == "getLunchMenu":
-        return get_lunch_items()
+        if sid in session:
+            return get_lunch_items()
+        else:
+            return generateResponse("Not Logged in", "", {})
     if content["action"] == "getSnacksMenu":
         return get_snacks_items()
     if content["action"] == "makeACall":
