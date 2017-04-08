@@ -3,6 +3,8 @@
 from flask import Flask, jsonify, request, session, Session,escape
 import flask
 # from mail import send
+from db import db
+import time
 import json,uuid
 from flask.ext.mysql import MySQL
 
@@ -10,7 +12,7 @@ from flask.ext.mysql import MySQL
 # from mail import send
 app = Flask(__name__)
 mysql = MySQL()
-
+mongo = db.MongoDB("bot_stats")
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'root'
 app.config['MYSQL_DATABASE_DB'] = 'master'
@@ -62,7 +64,7 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    sid = (request.get_json(silent=True)["session_id"])
+    sid = (request.get_json(silent=True)["sessionId"])
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
@@ -72,6 +74,9 @@ def test():
             return get_lunch_items()
         else:
             return generateResponse("Not Logged in", "", {})
+    if content["action"] == "bookLunch":
+        return bookLunch()
+
     if content["action"] == "getSnacksMenu":
         return get_snacks_items()
     if content["action"] == "makeACall":
@@ -93,14 +98,26 @@ def generateResponse(msg, source, resData):
         "displayText": msg
     }
     if (source):
-        data["source"] = source;
+        data["source"] = source
         if (resData):
-            data["data"] = resData;
+            data["data"] = resData
     return jsonify(data)
 
 
-def booklunch(no):
-    sendMail()
+def bookLunch():
+    if 'email' in session:
+        cursor = mysql.connect().cursor()
+        cursor.execute("select items from lunch_items where items_date = CURDATE()")
+        items = cursor.fetchone()
+        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session["email"]))
+        emp_ids = cursor.fetchone()
+        order = {"timestamp": time.time(), "items":items[0], "num": 1 }
+        mongo.update_order("food_orders",order,emp_ids[0])
+        return generateResponse("dads", "", {})
+    else:
+
+        return generateResponse("Not Logged in","",{})
+
 
 
 def get_lunch_items():
