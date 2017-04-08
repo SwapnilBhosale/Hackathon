@@ -1,6 +1,6 @@
 # import configparser
 # from flask.ext.sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify, request, session, Session,escape
+from flask import Flask, jsonify, request, escape
 import flask
 # from mail import send
 from db import db
@@ -13,6 +13,7 @@ from flask.ext.mysql import MySQL
 app = Flask(__name__)
 mysql = MySQL()
 mongo = db.MongoDB("bot_stats")
+session = {};
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'root'
 app.config['MYSQL_DATABASE_DB'] = 'master'
@@ -38,6 +39,7 @@ def login():
         #session[str(id)]['password'] = request.form['password']
         #session['email'] = request.form['email']
         #session['password'] =  request.form['password']
+        print str(id)
         returnData = {
             "status": True,
             "data": data,
@@ -48,6 +50,7 @@ def login():
             "status": False,
             "errorMessage": "Wrong username or password"
         }
+    print session    
     return jsonify(returnData)
 
 
@@ -55,12 +58,19 @@ def login():
 def logout():
     # remove the email from the session if it's there
     sidOrg = (request.get_json(silent=True)['session_id'])
+
+    print str(sidOrg)
+    print session
+    for k in session:
+        print 'session {}'.format(len(k))
     #content = (request.get_json(silent=True)["result"])
-    if sidOrg in session:
+    if str(sidOrg) in session:
         session.pop(sidOrg)
         #session.pop('password')
         #session.pop('sid')
-        return generateResponse("Logged Out successfully","",{})
+        return jsonify({"status":True,"message":"logout successfully"})
+    else:
+        return jsonify({"status":False,"message":"session not found"})
 
 @app.route("/test", methods=['POST'])
 def test():
@@ -186,7 +196,7 @@ def get_mail_id(content):
 if __name__ == "__main__":
     app.secret_key = 'super secret key'
     app.config['SESSION_TYPE'] = 'filesystem'
-    sess = Session()
+    #sess = Session()
     app.debug = True
     app.run(host='0.0.0.0')
 
