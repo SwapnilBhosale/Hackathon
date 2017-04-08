@@ -59,7 +59,7 @@ def login():
 @app.route('/logout',methods=['POST'])
 def logout():
     # remove the email from the session if it's there
-    sidOrg = (request.get_json(silent=True)['session_id'])
+    sidOrg = (request.get_json(silent=True)['sessionId'])
 
     print str(sidOrg)
     print session
@@ -121,38 +121,22 @@ def generateResponse(msg, source, resData):
     return jsonify(data)
 
 
-def bookLunch(sid):
-        cursor = mysql.connect().cursor()
-        cursor.execute("select items from lunch_items where items_date = CURDATE()")
-        items = cursor.fetchone()
-        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session[sid]["email"]))
-        emp_ids = cursor.fetchone()
-        print items
-        order = {"timestamp": time.time(),"items":items[0], "num": 1}
-        userData = mongo.findRecord("food_orders",{"emp_id" : emp_ids[0]})
-        print userData
-        if(userData):
-            mongo.update_order("food_orders",order,emp_ids[0])
-        else:
-            mongo.insertRecord("food_orders",{"emp_id" : emp_ids[0],"orders":order})
-        return generateResponse("Logged in", "", {})
-
-
-
 def bookLunch():
-    sid = (request.get_json(silent=True)["sessionId"])
-    cursor = mysql.connect().cursor()
-    cursor.execute("select items from lunch_items where items_date = CURDATE()")
-    items = cursor.fetchone()
-    emp_id = session[sid]['emp_id']
-    order = {"timestamp": int(time.time()), "items":items[0], "num": 1}
-    userData = mongo.findRecord("food_orders",{"emp_id" : emp_id})
-    print userData
-    if(userData):
-        mongo.update_order("food_orders",order,emp_id)
-    else:
-        mongo.insertRecord("food_orders",{"emp_id" : emp_id,"orders":[order]})
-    return generateResponse("Logged in", "", {})
+  sid = (request.get_json(silent=True)["sessionId"])
+  cursor = mysql.connect().cursor()
+  cursor.execute("select items from lunch_items where items_date = CURDATE()")
+  items = cursor.fetchone()
+  emp_id = session[sid]["emp_id"]
+  print items
+  order = {"timestamp": time.time(),"items":items[0], "num": 1}
+  userData = mongo.findRecord("food_orders",{"emp_id" : emp_id})
+  print userData
+  if(userData):
+      mongo.update_order("food_orders",order,emp_id)
+  else:
+      mongo.insertRecord("food_orders",{"emp_id" : emp_id,"orders":[order]})
+  send_mail({'to':session[sid]['email']}, 'Lunch booking confirmation', 'Your lunch has been booked', 'facilities@gslab.com')
+  return generateResponse("Lunch has been booked! Hope you enjoy as always.", "", {})
 
 def get_lunch_items():
     cursor = mysql.connect().cursor()
@@ -182,7 +166,7 @@ def collect_ticket_info(content):
 def collect_mails(tkt_id):
   sid = (request.get_json(silent=True)["sessionId"])
   mail = imaplib.IMAP4_SSL('imap.gmail.com')
-  mail.login(session[sid]['_email'], session[sid]['_password'])
+  mail.login(session[sid]['email'], session[sid]['_password'])
   mail.list()
   # Out: list of "folders" aka labels in gmail.
   mail.select("inbox") # connect to inbox.
@@ -218,7 +202,7 @@ def request_facility(content):
         conn.commit()
         tids.append('Tkt#{} for {}'.format(cursor.lastrowid, item))
     for sub in tids:
-      send_mail({'to':session[sid]['_email']}, sub, 'Thank you for the request! Someone soon will take care of it.', 'facilities@gslab.com')
+      send_mail({'to':session[sid]['email']}, sub, 'Thank you for the request! Someone soon will take care of it.', 'facilities@gslab.com')
 
     return generateResponse("Here you go ?? - {}".format('\n'.join(tids)), "placed", {'tracking_id': cursor.lastrowid})
 
@@ -257,7 +241,7 @@ def insert_and_send_mail(content, _type, e_type, reason):
       row = '("{}", CURDATE(), "{}", "{}", "{}")'.format('gs-0834', fd, e_type, reason)
       cursor.execute('insert into leaves (emp_id, apply_date, for_date, type, reason) values {}'.format(row))
       conn.commit()
-      send_mail({'to':session[sid]['_email']}, _type + ' application for ' + fd, 'Your manager will approve it soon.', 'facilities@gslab.com')
+      send_mail({'to':session[sid]['email']}, _type + ' application for ' + fd, 'Your manager will approve it soon.', 'facilities@gslab.com')
       start = start + datetime.timedelta(days=1)
     return generateResponse(_type + 's have applied for the following dates - {}'.format('\n'.join(leaves)), "done", {})
   else:
@@ -265,7 +249,7 @@ def insert_and_send_mail(content, _type, e_type, reason):
     row = '("{}", CURDATE(), "{}", "{}", "{}")'.format('gs-0834', date, e_type, reason)
     cursor.execute('insert into leaves (emp_id, apply_date, for_date, type, reason) values {}'.format(row))
     conn.commit()
-    send_mail({'to':session[sid]['_email']}, _type + ' application for ' + date, 'Your manager will approve it soon.', 'facilities@gslab.com')
+    send_mail({'to':session[sid]['email']}, _type + ' application for ' + date, 'Your manager will approve it soon.', 'facilities@gslab.com')
     return generateResponse(_type + ' has been applied for - {}'.format(date), "done", {})
 
 
