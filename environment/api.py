@@ -62,7 +62,7 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    sid = (request.get_json(silent=True)["session_id"])
+    sid = (request.get_json(silent=True)["sessionId"])
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
