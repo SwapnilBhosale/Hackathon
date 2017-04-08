@@ -61,7 +61,7 @@ def send_invite(param):
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
-    mailServer.login('abhijeet.bhagat@gslab.com', '')
+    mailServer.login('abhijeet.bhagat@gslab.com', 'm@v3r1ck')
     mailServer.sendmail(fro, param['to'], msg.as_string())
     mailServer.close()
 
@@ -76,7 +76,7 @@ def send_mail(param, subject, body, sender):
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
-    mailServer.login('abhijeet.bhagat@gslab.com', '')
+    mailServer.login('abhijeet.bhagat@gslab.com', 'm@v3r1ck')
     mailServer.sendmail(sender, param['to'], msg.as_string())
     mailServer.close()
 if __name__ == "__main__" :
