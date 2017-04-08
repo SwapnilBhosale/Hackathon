@@ -121,6 +121,24 @@ def generateResponse(msg, source, resData):
     return jsonify(data)
 
 
+def bookLunch(sid):
+        cursor = mysql.connect().cursor()
+        cursor.execute("select items from lunch_items where items_date = CURDATE()")
+        items = cursor.fetchone()
+        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session[sid]["email"]))
+        emp_ids = cursor.fetchone()
+        print items
+        order = {"timestamp": time.time(),"items":items[0], "num": 1}
+        userData = mongo.findRecord("food_orders",{"emp_id" : emp_ids[0]})
+        print userData
+        if(userData):
+            mongo.update_order("food_orders",order,emp_ids[0])
+        else:
+            mongo.insertRecord("food_orders",{"emp_id" : emp_ids[0],"orders":order})
+        return generateResponse("Logged in", "", {})
+
+
+
 def bookLunch():
     sid = (request.get_json(silent=True)["sessionId"])
     cursor = mysql.connect().cursor()
