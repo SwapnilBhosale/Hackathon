@@ -13,7 +13,7 @@ from flask.ext.mysql import MySQL
 app = Flask(__name__)
 mysql = MySQL()
 mongo = db.MongoDB("bot_stats")
-session = {};
+session = {}
 app.config['MYSQL_DATABASE_USER'] = 'root'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'root'
 app.config['MYSQL_DATABASE_DB'] = 'master'
@@ -85,7 +85,7 @@ def test():
         else:
             return generateResponse("Not Logged in", "", {})
     if content["action"] == "bookLunch":
-        return bookLunch()
+        return bookLunch(sid)
 
     if content["action"] == "getSnacksMenu":
         return get_snacks_items()
@@ -114,19 +114,21 @@ def generateResponse(msg, source, resData):
     return jsonify(data)
 
 
-def bookLunch():
-    if 'email' in session:
+def bookLunch(sid):
         cursor = mysql.connect().cursor()
         cursor.execute("select items from lunch_items where items_date = CURDATE()")
         items = cursor.fetchone()
-        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session["email"]))
+        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session[sid]["email"]))
         emp_ids = cursor.fetchone()
-        order = {"timestamp": time.time(), "items":items[0], "num": 1 }
-        mongo.update_order("food_orders",order,emp_ids[0])
-        return generateResponse("dads", "", {})
-    else:
+        order = {"timestamp": time.time(), "items":items[0], "num": 1}
+        userData = mongo.findRecord("food_orders",{"emp_id" : emp_ids[0]})
+        print userData
+        if(userData):
+            mongo.update_order("food_orders",order,emp_ids[0])
+        else:
+            mongo.insertRecord("food_orders",{"emp_id" : emp_ids[0],"orders":order})
+        return generateResponse("Logged in", "", {})
 
-        return generateResponse("Not Logged in","",{})
 
 
 
