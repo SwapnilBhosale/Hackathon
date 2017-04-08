@@ -152,16 +152,21 @@ def get_snacks_items():
 
 def track_request(content):
     ti = collect_ticket_info(content)
+    if not ti:
+      return generateResponse('Sorry, no items found for the request', '', {})
     mail = collect_mails(ti[1])
-    return "I found these items related to your request: {}\nLatest mail:\n{}".format(ti[0], mail)
+    return generateResponse("I found these items related to your request: {}\nLatest mail:\n{}".format(ti[0], mail), '', {})
     
 def collect_ticket_info(content):
     item = content["parameters"]["name"]
     emp_id = content["parameters"]["emp_id"]
     cursor = mysql.connect().cursor()
-    cursor.execute("select t.idtickets, e.first_name from tickets t, employees e where t.assigned_id=e.employee_id and t.name like '%"+item+"%' and t.emp_id='"+emp_id+"'")
-    data = cursor.fetchone()
-    return ('Ticket id: {} Assigned to:  {}'.format(data[0], data[1]),data[0]) 
+    count = cursor.execute("select t.idtickets, e.first_name from tickets t, employees e where t.assigned_id=e.employee_id and t.name like '%"+item+"%' and t.emp_id='"+emp_id+"'")
+    if count:
+      data = cursor.fetchone()
+      return ('Ticket id: {} Assigned to:  {}'.format(data[0], data[1]),data[0]) 
+    else:
+      return ()
 
 def collect_mails(tkt_id):
   sid = (request.get_json(silent=True)["sessionId"])
