@@ -65,6 +65,8 @@ def test():
     if content["action"] == "doWebRtcCall":
         # to do compare here name with the email ID and send email Id a data param
         return get_mail_id(content)
+    if content["action"] == "trackRequest":
+        return track_request(content)
     return "action not recognized"
 
 
@@ -93,13 +95,42 @@ def get_lunch_items():
     else:
         return generateResponse("Not Logged in","",{})
 
-
 def get_snacks_items():
     cursor = mysql.connect().cursor()
     cursor.execute("select snacks from lunch_items where items_date = CURDATE()")
     data = cursor.fetchone()
     return generateResponse("Theres " + data[0], "show", {"list": data})
 
+def track_request(content):
+    ti = collect_ticket_info(content)
+    mail = collect_mails(ti[1])
+    return "I found these items related to your request: {}\nLatest mail:\n{}".format(ti[0], mail)
+    
+def collect_ticket_info(content):
+    item = content["parameters"]["name"]
+    emp_id = content["parameters"]["emp_id"]
+    cursor = mysql.connect().cursor()
+    cursor.execute("select t.idtickets, e.first_name from tickets t, employees e where t.assigned_id=e.employee_id and t.name like '%"+item+"%' and t.emp_id='"+emp_id+"'")
+    data = cursor.fetchone()
+    return ('Ticket id: {} Assigned to:  {}'.format(data[0], data[1]),data[0]) 
+
+def collect_mails(tkt_id):
+  mail = imaplib.IMAP4_SSL('imap.gmail.com')
+  mail.login('abhijeet.bhagat@gslab.com', 'm@v3r1ck')
+  mail.list()
+  # Out: list of "folders" aka labels in gmail.
+  mail.select("inbox") # connect to inbox.
+
+  result, data = mail.search(None, '(FROM "abhijeet bhagat" SUBJECT "Tkt#{}")'.format(tkt_id))
+
+  ids = data[0] # data is a list.
+  id_list = ids.split() # ids is a space separated string
+  latest_email_id = id_list[-1] # get the latest
+
+  result, data = mail.fetch(latest_email_id, "(RFC822)") # fetch the email body (RFC822)             for the given ID
+
+  raw_email = data[0][1] # here's the body, which is raw text of the whole email
+  print(raw_email)
 
 def request_facility():
     pass
@@ -123,7 +154,6 @@ if __name__ == "__main__":
     app.config['SESSION_TYPE'] = 'filesystem'
     sess = Session()
     app.debug = True
-    app.run()
     app.run(host='0.0.0.0')
 
 
