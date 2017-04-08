@@ -9,7 +9,9 @@ import json,uuid
 from flask.ext.mysql import MySQL
 
 # from flask_mysql import MySQL
-# from mail import send
+from mail import send_mail
+import datetime
+
 app = Flask(__name__)
 mysql = MySQL()
 mongo = db.MongoDB("bot_stats")
@@ -29,13 +31,13 @@ def login():
     _password = (request.get_json(silent=True)['password'])
     print _email
     cursor = mysql.connect().cursor()
-    count = cursor.execute("select e.first_name,e.last_name from employees e,user u where u.email = '" + _email + "' AND u.password = '" + _password + "' AND e.employee_id=u.employee_id");
+    count = cursor.execute("select e.employee_id, e.first_name,e.last_name from employees e,user u where u.email = '" + _email + "' AND u.password = '" + _password + "' AND e.employee_id=u.employee_id");
     data = cursor.fetchone()
     returnData = None
     if (count != 0):
         id = uuid.uuid4()
 
-        session[str(id)]={'email' : _email,'password' : _password}
+        session[str(id)]={'email' : _email,'password' : _password, 'emp_id':data[0]}
         #session[str(id)]['password'] = request.form['password']
         #session['email'] = request.form['email']
         #session['password'] =  request.form['password']
@@ -99,8 +101,13 @@ def test():
         return get_mail_id(content)
     if content["action"] == "trackRequest":
         return track_request(content)
+    if content["action"] == "requestFacility":
+        return request_facility(content)
+    if content["action"] == "applyLeaves":
+        return apply_leaves(content)
+    if content["action"] == "applyODs":
+        return apply_ods(content)
     return "action not recognized"
-
 
 def generateResponse(msg, source, resData):
     data = {
@@ -114,23 +121,20 @@ def generateResponse(msg, source, resData):
     return jsonify(data)
 
 
-def bookLunch(sid):
-        cursor = mysql.connect().cursor()
-        cursor.execute("select items from lunch_items where items_date = CURDATE()")
-        items = cursor.fetchone()
-        emp_id = cursor.execute("select employee_id from user where email = '{}'".format(session[sid]["email"]))
-        emp_ids = cursor.fetchone()
-        order = {"timestamp": time.time(), "items":items[0], "num": 1}
-        userData = mongo.findRecord("food_orders",{"emp_id" : emp_ids[0]})
-        print userData
-        if(userData):
-            mongo.update_order("food_orders",order,emp_ids[0])
-        else:
-            mongo.insertRecord("food_orders",{"emp_id" : emp_ids[0],"orders":order})
-        return generateResponse("Logged in", "", {})
-
-
-
+def bookLunch():
+    sid = (request.get_json(silent=True)["sessionId"])
+    cursor = mysql.connect().cursor()
+    cursor.execute("select items from lunch_items where items_date = CURDATE()")
+    items = cursor.fetchone()
+    emp_id = session[sid]['emp_id']
+    order = {"timestamp": time.time(), "items":items[0], "num": 1}
+    userData = mongo.findRecord("food_orders",{"emp_id" : emp_id})
+    print userData
+    if(userData):
+        mongo.update_order("food_orders",order,emp_id)
+    else:
+        mongo.insertRecord("food_orders",{"emp_id" : emp_id,"orders":order})
+    return generateResponse("Logged in", "", {})
 
 def get_lunch_items():
     if 'email' in session:
@@ -161,13 +165,14 @@ def collect_ticket_info(content):
     return ('Ticket id: {} Assigned to:  {}'.format(data[0], data[1]),data[0]) 
 
 def collect_mails(tkt_id):
+  sid = (request.get_json(silent=True)["sessionId"])
   mail = imaplib.IMAP4_SSL('imap.gmail.com')
-  mail.login('abhijeet.bhagat@gslab.com', 'm@v3r1ck')
+  mail.login(session[sid]['_email'], session[sid]['_password'])
   mail.list()
   # Out: list of "folders" aka labels in gmail.
   mail.select("inbox") # connect to inbox.
 
-  result, data = mail.search(None, '(FROM "abhijeet bhagat" SUBJECT "Tkt#{}")'.format(tkt_id))
+  result, data = mail.search(None, '(FROM "facilities" SUBJECT "Tkt#{}")'.format(tkt_id))
 
   ids = data[0] # data is a list.
   id_list = ids.split() # ids is a space separated string
@@ -178,21 +183,76 @@ def collect_mails(tkt_id):
   raw_email = data[0][1] # here's the body, which is raw text of the whole email
   print(raw_email)
 
-def request_facility():
-    pass
+def request_facility(content):
+    sid = (request.get_json(silent=True)["sessionId"])
+    facility_items = content['parameters']['facilityItems']
+    it_items = content['parameters']['itItems']
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    tids = []
+    if len(it_items) > 0:
+      for item in it_items:
+        rows = '("{}", "{}", "{}", "{}")'.format('IT', item, 1, session[sid]['emp_id'])
+        num = cursor.execute('insert into tickets (type, name, inventory_id, emp_id) values {}'.format(rows))
+        conn.commit()
+        tids.append('Tkt#{} for {}'.format(cursor.lastrowid, item))
+    if len(facility_items) > 0:
+      for item in facility_items:
+        rows = '("{}", "{}", "{}", "{}")'.format('OTHERS', item, 1, session[sid]['emp_id'])
+        num = cursor.execute('insert into tickets (type, name, inventory_id, emp_id) values {}'.format(rows))
+        conn.commit()
+        tids.append('Tkt#{} for {}'.format(cursor.lastrowid, item))
+    for sub in tids:
+      send_mail({'to':session[sid]['_email']}, sub, 'Thank you for the request! Someone soon will take care of it.', 'facilities@gslab.com')
 
+    return generateResponse("Here you go ?? - {}".format('\n'.join(tids)), "placed", {'tracking_id': cursor.lastrowid})
 
 def get_mail_id(content):
     name = content["parameters"]["name"]
-    cursor = mysql.connect().cursor()
-    num = cursor.execute(
-        'select email, first_name, last_name from employees where first_name like "%' + name + '%" or last_name like "%' + name + '%"')
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    num = cursor.execute('select email, first_name, last_name from employees where first_name like "%' + name + '%" or last_name like "%' + name + '%"')
     if (num > 2):
         print("call ml")
         return generateResponse("Did you mean... ?", "call", {"to": "null", "name": "null"})
     else:
         data = cursor.fetchone()
         return generateResponse("Call has been placed", "call", {"to": data[0], "name": data[1] + ' ' + data[2]})
+
+def apply_leaves(content):
+  return insert_and_send_mail(content, 'Leave', 'PL', '')
+
+def apply_ods(content):
+  reason = content['parameters']['reason']
+  return insert_and_send_mail(content, 'OD', 'OD', reason)
+
+def insert_and_send_mail(content, _type, e_type, reason):
+  sid = (request.get_json(silent=True)["sessionId"])
+  conn = mysql.connect()
+  cursor = conn.cursor()
+  if content['parameters']['periodDate']:
+    date = content['parameters']['periodDate']
+    arr = date.split('/')
+    start = datetime.datetime.strptime(arr[0], "%Y-%m-%d").date()
+    end = datetime.datetime.strptime(arr[1], "%Y-%m-%d").date()
+    leaves = []
+    while start <= end:
+      fd = start.strftime('%Y-%m-%d')
+      leaves.append(fd)
+      row = '("{}", CURDATE(), "{}", "{}", "{}")'.format('gs-0834', fd, e_type, reason)
+      cursor.execute('insert into leaves (emp_id, apply_date, for_date, type, reason) values {}'.format(row))
+      conn.commit()
+      send_mail({'to':session[sid]['_email']}, _type + ' application for ' + fd, 'Your manager will approve it soon.', 'facilities@gslab.com')
+      start = start + datetime.timedelta(days=1)
+    return generateResponse(_type + 's have applied for the following dates - {}'.format('\n'.join(leaves)), "done", {})
+  else:
+    date = content['parameters']['startDate']
+    row = '("{}", CURDATE(), "{}", "{}", "{}")'.format('gs-0834', date, e_type, reason)
+    cursor.execute('insert into leaves (emp_id, apply_date, for_date, type, reason) values {}'.format(row))
+    conn.commit()
+    send_mail({'to':session[sid]['_email']}, _type + ' application for ' + date, 'Your manager will approve it soon.', 'facilities@gslab.com')
+    return generateResponse(_type + ' has been applied for - {}'.format(date), "done", {})
+
 
 
 if __name__ == "__main__":
