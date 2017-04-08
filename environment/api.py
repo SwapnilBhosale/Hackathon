@@ -42,10 +42,12 @@ def login():
     return jsonify(returnData)
 
 
-# @app.route('/logout')
-# def logout():
-#     # remove the username from the session if it's there
-#     session.pop('email', None)
+@app.route('/logout')
+def logout():
+    # remove the email from the session if it's there
+    session.pop('email')
+    session.pop('password')
+    return generateResponse("Logged Out successfully","",{})
 
 @app.route("/test", methods=['POST'])
 def test():
