@@ -166,8 +166,9 @@ def track_request(content):
     return generateResponse("I found these items related to your request: {}\nLatest mail:\n{}".format(ti[0], mail), '', {})
     
 def collect_ticket_info(content):
+    sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
     item = content["parameters"]["name"]
-    emp_id = content["parameters"]["emp_id"]
+    emp_id = session[sid]['emp_id']
     cursor = mysql.connect().cursor()
     count = cursor.execute("select t.idtickets, e.first_name from tickets t, employees e where t.assigned_id=e.employee_id and t.name like '%"+item+"%' and t.emp_id='"+emp_id+"'")
     if count:
