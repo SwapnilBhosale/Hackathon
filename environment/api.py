@@ -76,7 +76,7 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    sid = (request.get_json(silent=True)["sessionId"])
+    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
@@ -122,7 +122,7 @@ def generateResponse(msg, source, resData):
 
 
 def bookLunch():
-  sid = (request.get_json(silent=True)["sessionId"])
+    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
   cursor = mysql.connect().cursor()
   cursor.execute("select items from lunch_items where items_date = CURDATE()")
   items = cursor.fetchone()
@@ -169,7 +169,7 @@ def collect_ticket_info(content):
       return ()
 
 def collect_mails(tkt_id):
-  sid = (request.get_json(silent=True)["sessionId"])
+  sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
   mail = imaplib.IMAP4_SSL('imap.gmail.com')
   mail.login(session[sid]['email'], session[sid]['_password'])
   mail.list()
@@ -188,7 +188,7 @@ def collect_mails(tkt_id):
   print(raw_email)
 
 def request_facility(content):
-    sid = (request.get_json(silent=True)["sessionId"])
+    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
     print('sid - '+sid)
     print(session[sid])
     facility_items = content['parameters']['facilityItems']
@@ -233,7 +233,7 @@ def apply_ods(content):
   return insert_and_send_mail(content, 'OD', 'OD', reason)
 
 def insert_and_send_mail(content, _type, e_type, reason):
-  sid = (request.get_json(silent=True)["sessionId"])
+  sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
   conn = mysql.connect()
   cursor = conn.cursor()
   if content['parameters']['periodDate']:
