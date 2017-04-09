@@ -8,6 +8,12 @@ import time
 import json,uuid
 from flask.ext.mysql import MySQL
 
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.model_selection import train_test_split
+
+
 # from flask_mysql import MySQL
 from mail import send_mail
 import datetime
@@ -76,7 +82,9 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
+    sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
+    print sid
+    print session
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
@@ -122,7 +130,7 @@ def generateResponse(msg, source, resData):
 
 
 def bookLunch():
-    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
+  sid = (request.get_json(silent=True)['result']['contexts']['parameters']["sessionId"])
   cursor = mysql.connect().cursor()
   cursor.execute("select items from lunch_items where items_date = CURDATE()")
   items = cursor.fetchone()
@@ -169,7 +177,7 @@ def collect_ticket_info(content):
       return ()
 
 def collect_mails(tkt_id):
-  sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
+  sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
   mail = imaplib.IMAP4_SSL('imap.gmail.com')
   mail.login(session[sid]['email'], session[sid]['_password'])
   mail.list()
@@ -187,8 +195,43 @@ def collect_mails(tkt_id):
   raw_email = data[0][1] # here's the body, which is raw text of the whole email
   print(raw_email)
 
+def doStats(sessionId):
+	print(session[sessionId]["emp_id"])
+	data = mongo.findRecord("food_orders",{"emp_id" : session[sessionId]["emp_id"]})
+	df = pd.DataFrame(data["orders"])
+	#print pd
+	#print(data)
+	print df.head()
+	
+	df_mod = df.copy();
+	df['isBooked'] = df['num'] > 1
+	df.drop('num', axis=1, inplace=True)
+	df.drop('timestamp', axis=1, inplace=True)
+	df['items'].str[1:-1].str.split(',', expand=True)
+	df['a'] = df['items'].str.split(",").str.get(0)
+	df['b'] = df['items'].str.split(",").str.get(1)
+	df['c'] = df['items'].str.split(",").str.get(2)
+	df['d'] = df['items'].str.split(",").str.get(3)
+	df['e'] = df['items'].str.split(",").str.get(4)
+	df['f'] = df['items'].str.split(",").str.get(5)
+	df['g'] = df['items'].str.split(",").str.get(6)
+	df['h'] = df['items'].str.split(",").str.get(7)
+	df['i'] = df['items'].str.split(",").str.get(8)
+	df.drop('items', axis=1, inplace=True)
+	
+	
+	print df.head();
+	
+	#train, test = train_test_split(df, test_size = 0.2)
+	#X = train["items"]).split(",")
+	#Y = train["isBooked"]
+	#dff= df.DataFrame(d)
+	#dtree = DecisionTreeClassifier(max_leaf_nodes=3,random_state=0,compute_importances = True)
+	#dtree = dtree.fit(X, Y)
+	#print DataFrame(dtree.feature_importances_, columns = ["Imp"], index = X.columns).sort(['Imp'], ascending = False)
+	
 def request_facility(content):
-    sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
+    sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
     print('sid - '+sid)
     print(session[sid])
     facility_items = content['parameters']['facilityItems']
@@ -233,7 +276,7 @@ def apply_ods(content):
   return insert_and_send_mail(content, 'OD', 'OD', reason)
 
 def insert_and_send_mail(content, _type, e_type, reason):
-  sid = (request.get_json(silent=True)['result']['contexts']["sessionId"])
+  sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
   conn = mysql.connect()
   cursor = conn.cursor()
   if content['parameters']['periodDate']:
