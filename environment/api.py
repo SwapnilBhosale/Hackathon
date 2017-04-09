@@ -80,39 +80,34 @@ def test():
     content = (request.get_json(silent=True)["result"])
     print(content["action"])
     d = []
-
-    if content["action"] == "getLunchMenu":
-        if sid in session:
-            return get_lunch_items()
-        else:
-            return generateResponse("Not Logged in", "", {})
-    if content["action"] == "bookLunch":
-        return bookLunch()
-
-    if content["action"] == "getSnacksMenu":
-      if sid in session:
-        return get_snacks_items()
-      else:
-        return generateResponse("Not Logged in", "", {})
-    if content["action"] == "makeACall":
-        return generateResponse("CallConfirmed")
-    if content["action"] == "bookingConfirmed":
-        bookLunch(no=2)
-        return generateResponse("A booking mail has been sent")
-    if content["action"] == "doWebRtcCall":
-        # to do compare here name with the email ID and send email Id a data param
-        return get_mail_id(content)
-    if content["action"] == "trackRequest":
-        return track_request(content)
-    if content["action"] == "requestFacility":
-        return request_facility(content)
-    if content["action"] == "applyLeaves":
-        return apply_leaves(content)
-    if content["action"] == "applyODs":
-        return apply_ods(content)
-    if content["action"] == "getBestWeekend":
-        return get_best_leaves()
-    return "action not recognized"
+    if sid in session:
+      if content["action"] == "getLunchMenu":
+              return get_lunch_items()
+      if content["action"] == "bookLunch":
+          return bookLunch()
+      if content["action"] == "getSnacksMenu":
+          return get_snacks_items()
+      if content["action"] == "makeACall":
+          return generateResponse("CallConfirmed")
+      if content["action"] == "bookingConfirmed":
+          bookLunch(no=2)
+          return generateResponse("A booking mail has been sent")
+      if content["action"] == "doWebRtcCall":
+          # to do compare here name with the email ID and send email Id a data param
+          return get_mail_id(content)
+      if content["action"] == "trackRequest":
+          return track_request(content)
+      if content["action"] == "requestFacility":
+          return request_facility(content)
+      if content["action"] == "applyLeaves":
+          return apply_leaves(content)
+      if content["action"] == "applyODs":
+          return apply_ods(content)
+      if content["action"] == "getBestWeekend":
+          return get_best_leaves()
+      return "action not recognized"
+    else:
+      return generateResponse("Not Logged in", "", {})
 
 def generateResponse(msg, source, resData):
     data = {
@@ -194,6 +189,8 @@ def collect_mails(tkt_id):
 
 def request_facility(content):
     sid = (request.get_json(silent=True)["sessionId"])
+    print('sid - '+sid)
+    print(session[sid])
     facility_items = content['parameters']['facilityItems']
     it_items = content['parameters']['itItems']
     conn = mysql.connect()
