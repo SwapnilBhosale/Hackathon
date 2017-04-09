@@ -162,8 +162,8 @@ def track_request(content):
     ti = collect_ticket_info(content)
     if not ti:
       return generateResponse('Sorry, no items found for the request', '', {})
-    mail = collect_mails(ti[1])
-    return generateResponse("I found these items related to your request: {}\nLatest mail:\n{}".format(ti[0], mail), '', {})
+    #mail = collect_mails(ti[1])
+    return generateResponse("I found these items related to your request: {}".format(ti[0]), '', {})
     
 def collect_ticket_info(content):
     sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
