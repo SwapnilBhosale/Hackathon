@@ -120,7 +120,7 @@ def test():
         return openMapDefault(content) 
     if content["action"] == "todayMenu":
         return openMenu(content)
-    if content["action"] == "transit":
+    if content["action"] == "transitDefault":
         return openTransit(content)
     return "action not recognized"
     
