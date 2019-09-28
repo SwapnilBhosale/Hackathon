@@ -1,6 +1,6 @@
 # import configparser
 # from flask.ext.sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify, request, escape
+from flask import Flask, jsonify, request
 import flask
 # from mail import send
 from db import db
@@ -82,7 +82,7 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    print(request.get_json());
+    print(request.get_json())
     #sid = (request.get_json(silent=True)['result']['event'][0]['parameters']["sessionId"])
     #print( sid)
     #print( session)
@@ -114,7 +114,49 @@ def test():
         return apply_ods(content)
     if content["action"] == "getBestWeekend":
         return get_best_leaves()
+    if content["action"] == "showMap":
+        return openMap(content)
+    if content["action"] == "showMapDefault":
+        return openMapDefault(content) 
+    if content["action"] == "todayMenu":
+        return openMenu(content)
+    if content["action"] == "transit":
+        return openTransit(content)
     return "action not recognized"
+    
+def openTransit(content):
+    msg = "Opening Schedule"
+    source = "transit"
+    data = {
+        "to": content["parameters"]["to"]
+    }
+    return generateResponse(msg, source, data)
+def openMenu(content):
+    msg = 'Opening Menu'
+    source = 'menu'
+    data = {
+        "in": content["parameters"]["in"]
+    }
+    return generateResponse(msg, source, data)
+
+def openMapDefault(content):
+    msg = 'Opening Map'
+    source = "map"
+    data = {
+        "to": content["parameters"]["to"]
+    }
+    return generateResponse(msg, source, data)
+
+def openMap(content):
+
+    msg = "opening map"
+    source = "map"
+    data = {
+        "from": content['parameters']['from'],
+        "to": content['parameters']['to']
+    }
+    return generateResponse(msg, source, data)
+
 
 def generateResponse(msg, source, resData):
     data = {
@@ -194,6 +236,7 @@ def collect_mails(tkt_id):
 
   raw_email = data[0][1] # here's the body, which is raw text of the whole email
   print((raw_email))
+
 
 def doStats(sessionId):
 	print((session[sessionId]["emp_id"]))
