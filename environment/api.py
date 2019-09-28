@@ -121,10 +121,21 @@ def test():
     if content["action"] == "todayMenu":
         return openMenu(content)
     if content["action"] == "transitDefault":
+        return openTransitDefault(content)
+    if content["action"] == "transit":
         return openTransit(content)
     return "action not recognized"
-    
+
 def openTransit(content):
+    msg = "Opening Schedule"
+    source = "transit"
+    data = {
+        "from": content["parameters"]["from"], 
+        "to": content["parameters"]["to"]
+    }
+    return generateResponse(msg, source, data)
+    
+def openTransitDefault(content):
     msg = "Opening Schedule"
     source = "transit"
     data = {
