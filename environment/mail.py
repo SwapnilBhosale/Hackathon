@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 
-from email import Encoders
+from email import encoders
 import os, datetime
 
 #config = fileutil.social
@@ -18,7 +18,7 @@ def send_invite(param):
         for att in param['to']:
             attendees += "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN="+att+";X-NUM-GUESTS=0:mailto:"+att+CRLF
     except Exception as e:
-        print e
+        print (e)
     fro = "Bot <abhijeet.bhagat@gslab.com>"
     
     msg = MIMEMultipart('mixed')
@@ -76,7 +76,7 @@ def send_mail(param, subject, body, sender):
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
-    mailServer.login('abhijeet.bhagat@gslab.com', 'm@v3r1ck')
+    mailServer.login('vb15736@umbc.edu', 'Yo1ididit!')
     mailServer.sendmail(sender, param['to'], msg.as_string())
     mailServer.close()
 if __name__ == "__main__" :

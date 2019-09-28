@@ -6,12 +6,12 @@ import flask
 from db import db
 import time
 import json,uuid
-from flask.ext.mysql import MySQL
+from flaskext.mysql import MySQL
 
-import pandas as pd
-import numpy as np
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
-from sklearn.model_selection import train_test_split
+#import pandas as pd
+#import numpy as np
+#from sklearn.tree import DecisionTreeClassifier, export_graphviz
+#from sklearn.model_selection import train_test_split
 
 
 # from flask_mysql import MySQL
@@ -35,9 +35,9 @@ def login():
     #content = (request.get_json(silent=True))
     _email = (request.get_json(silent=True)['email'])
     _password = (request.get_json(silent=True)['password'])
-    print _email
+    print( _email)
     cursor = mysql.connect().cursor()
-    count = cursor.execute("select e.employee_id, e.first_name,e.last_name from employees e,user u where u.email = '" + _email + "' AND u.password = '" + _password + "' AND e.employee_id=u.employee_id");
+    count = cursor.execute("select u.user_id, u.first_name,u.last_name from users u where u.email = '" + _email + "' AND u.password = '" + _password+"'")
     data = cursor.fetchone()
     returnData = None
     if (count != 0):
@@ -47,7 +47,7 @@ def login():
         #session[str(id)]['password'] = request.form['password']
         #session['email'] = request.form['email']
         #session['password'] =  request.form['password']
-        print str(id)
+        print( str(id))
         returnData = {
             "status": True,
             "data": data,
@@ -58,7 +58,7 @@ def login():
             "status": False,
             "errorMessage": "Wrong username or password"
         }
-    print session    
+    print( session )   
     return jsonify(returnData)
 
 
@@ -67,10 +67,10 @@ def logout():
     # remove the email from the session if it's there
     sidOrg = (request.get_json(silent=True)['sessionId'])
 
-    print str(sidOrg)
-    print session
+    print( str(sidOrg))
+    print( session)
     for k in session:
-        print 'session {}'.format(len(k))
+        print( 'session {}'.format(len(k)))
     #content = (request.get_json(silent=True)["result"])
     if str(sidOrg) in session:
         session.pop(sidOrg)
@@ -82,40 +82,39 @@ def logout():
 
 @app.route("/test", methods=['POST'])
 def test():
-    sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
-    print sid
-    print session
+    print(request.get_json());
+    #sid = (request.get_json(silent=True)['result']['event'][0]['parameters']["sessionId"])
+    #print( sid)
+    #print( session)
     content = (request.get_json(silent=True)["result"])
-    print(content["action"])
+    print((content["action"]))
     d = []
-    if sid in session:
-      if content["action"] == "getLunchMenu":
-              return get_lunch_items()
-      if content["action"] == "bookLunch":
-          return bookLunch()
-      if content["action"] == "getSnacksMenu":
-          return get_snacks_items()
-      if content["action"] == "makeACall":
-          return generateResponse("CallConfirmed")
-      if content["action"] == "bookingConfirmed":
-          bookLunch(no=2)
-          return generateResponse("A booking mail has been sent")
-      if content["action"] == "doWebRtcCall":
-          # to do compare here name with the email ID and send email Id a data param
-          return get_mail_id(content)
-      if content["action"] == "trackRequest":
-          return track_request(content)
-      if content["action"] == "requestFacility":
-          return request_facility(content)
-      if content["action"] == "applyLeaves":
-          return apply_leaves(content)
-      if content["action"] == "applyODs":
-          return apply_ods(content)
-      if content["action"] == "getBestWeekend":
-          return get_best_leaves()
-      return "action not recognized"
-    else:
-      return generateResponse("Not Logged in", "", {})
+    #if sid in session:
+    if content["action"] == "getLunchMenu":
+            return get_lunch_items()
+    if content["action"] == "bookLunch":
+        return bookLunch()
+    if content["action"] == "getSnacksMenu":
+        return get_snacks_items()
+    if content["action"] == "makeACall":
+        return generateResponse("CallConfirmed")
+    if content["action"] == "bookingConfirmed":
+        bookLunch(no=2)
+        return generateResponse("A booking mail has been sent")
+    if content["action"] == "doWebRtcCall":
+        # to do compare here name with the email ID and send email Id a data param
+        return get_mail_id(content)
+    if content["action"] == "trackRequest":
+        return track_request(content)
+    if content["action"] == "requestFacility":
+        return request_facility(content)
+    if content["action"] == "applyLeaves":
+        return apply_leaves(content)
+    if content["action"] == "applyODs":
+        return apply_ods(content)
+    if content["action"] == "getBestWeekend":
+        return get_best_leaves()
+    return "action not recognized"
 
 def generateResponse(msg, source, resData):
     data = {
@@ -135,10 +134,10 @@ def bookLunch():
   cursor.execute("select items from lunch_items where items_date = CURDATE()")
   items = cursor.fetchone()
   emp_id = session[sid]["emp_id"]
-  print items
+  print( items)
   order = {"timestamp": time.time(),"items":items[0], "num": 1}
   userData = mongo.findRecord("food_orders",{"emp_id" : emp_id})
-  print userData
+  print( userData)
   if(userData):
       mongo.update_order("food_orders",order,emp_id)
   else:
@@ -194,15 +193,15 @@ def collect_mails(tkt_id):
   result, data = mail.fetch(latest_email_id, "(RFC822)") # fetch the email body (RFC822)             for the given ID
 
   raw_email = data[0][1] # here's the body, which is raw text of the whole email
-  print(raw_email)
+  print((raw_email))
 
 def doStats(sessionId):
-	print(session[sessionId]["emp_id"])
+	print((session[sessionId]["emp_id"]))
 	data = mongo.findRecord("food_orders",{"emp_id" : session[sessionId]["emp_id"]})
 	df = pd.DataFrame(data["orders"])
-	#print pd
-	#print(data)
-	print df.head()
+	#print( pd
+	#print((data)
+	print( df.head())
 	
 	df_mod = df.copy();
 	df['isBooked'] = df['num'] > 1
@@ -221,7 +220,7 @@ def doStats(sessionId):
 	df.drop('items', axis=1, inplace=True)
 	
 	
-	print df.head();
+	print( df.head())
 	
 	#train, test = train_test_split(df, test_size = 0.2)
 	#X = train["items"]).split(",")
@@ -229,12 +228,12 @@ def doStats(sessionId):
 	#dff= df.DataFrame(d)
 	#dtree = DecisionTreeClassifier(max_leaf_nodes=3,random_state=0,compute_importances = True)
 	#dtree = dtree.fit(X, Y)
-	#print DataFrame(dtree.feature_importances_, columns = ["Imp"], index = X.columns).sort(['Imp'], ascending = False)
+	#print( DataFrame(dtree.feature_importances_, columns = ["Imp"], index = X.columns).sort(['Imp'], ascending = False)
 	
 def request_facility(content):
     sid = (request.get_json(silent=True)['result']['contexts'][0]['parameters']["sessionId"])
-    print('sid - '+sid)
-    print(session[sid])
+    print(('sid - '+sid))
+    print((session[sid]))
     facility_items = content['parameters']['facilityItems']
     it_items = content['parameters']['itItems']
     conn = mysql.connect()
@@ -261,7 +260,7 @@ def get_mail_id(content):
     name = content["parameters"]["name"]
     conn = mysql.connect()
     cursor = conn.cursor()
-    num = cursor.execute('select email, first_name, last_name from employees where first_name like "%' + name + '%" or last_name like "%' + name + '%"')
+    num = cursor.execute('select email, first_name, last_name from users where first_name like "%' + name + '%" or last_name like "%' + name + '%"')
     if (num > 2):
         print("call ml")
         return generateResponse("Did you mean... ?", "call", {"to": "null", "name": "null"})
