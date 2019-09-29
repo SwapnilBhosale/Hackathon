@@ -7,6 +7,7 @@ from db import db
 import time
 import json,uuid
 from flaskext.mysql import MySQL
+from firebase import firebase
 
 #import pandas as pd
 #import numpy as np
@@ -17,6 +18,13 @@ from flaskext.mysql import MySQL
 # from flask_mysql import MySQL
 from mail import send_mail
 import datetime
+
+config = {
+"apiKey": "AIzaSyA7NBXXpXxTMMJYpKMrrs9YjwAcHLkOz-E",
+"authDomain": "umbchack-6bd42.firebaseapp.com",
+"databaseURL": "https://umbchack-6bd42.firebaseio.com/"
+}
+firebase = firebase.FirebaseApplication('https://umbchack-6bd42.firebaseio.com/', None)  
 
 app = Flask(__name__)
 mysql = MySQL()
@@ -187,21 +195,29 @@ def generateResponse(msg, source, resData):
     return jsonify(data)
 
 
+
 def bookLunch(sessionId):
   #sid = (request.get_json(silent=True)['result']['contexts']['parameters']["sessionId"])
   cursor = mysql.connect().cursor()
   cursor.execute("select items from lunch_items where items_date = CURDATE()")
   items = cursor.fetchone()
-  user_id = sessionId;
-  print( items)
+  user_id = sessionId
+  #print( items)
   order = {"timestamp": time.time(),"items":items[0], "num": 1}
   userData = mongo.findRecord("food_orders",{"user_id" : user_id})
-  print( userData)
+  #print( userData)
   if(userData):
       mongo.update_order("food_orders",order,user_id)
   else:
       mongo.insertRecord("food_orders",{"emp_id" : user_id,"orders":[order]})
-  #send_mail({'to':session}, 'Lunch booking confirmation', 'Your lunch has been booked', 'sswapnil.1993@gmail.com')
+  #send_mail({'to':session}, 'Lunch booking confirmation', 'Your lunch has been booked', 'sswapnil.1993@gmail.com') 
+  id = uuid.uuid4()
+
+  data = {
+      "name" : user_id
+
+  }
+  firebase.post("/ORDERS", data)
   return generateResponse("Lunch has been booked! Hope you enjoy as always.", "", {})
 
 def get_lunch_items():
