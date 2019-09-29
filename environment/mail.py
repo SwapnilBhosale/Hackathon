@@ -76,8 +76,13 @@ def send_mail(param, subject, body, sender):
     mailServer.ehlo()
     mailServer.starttls()
     mailServer.ehlo()
-    mailServer.login('vb15736@umbc.edu', 'Yo1ididit!')
-    mailServer.sendmail(sender, param['to'], msg.as_string())
+    mailServer.login('sswapnil.1993@gmail.com', 'Mav3R1cK')
+    
+    BODY = '\r\n'.join(['To: %s' % param['to'],
+                    'From: %s' % sender,
+                    'Subject: %s' % subject,
+                    '', body])
+    mailServer.sendmail(sender, param['to'], BODY)
     mailServer.close()
 if __name__ == "__main__" :
     #send_invite({"to":["abhijeet.bhagat@gslab.com"],"subject":"Party reminder","location":"flat","description":"Hangout","meetingStartDate":"20170512T083000Z","meetingEndDate":"20170512T093000Z"})

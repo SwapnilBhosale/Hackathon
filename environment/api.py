@@ -83,48 +83,50 @@ def logout():
 @app.route("/test", methods=['POST'])
 def test():
     print(request.get_json())
-    sid = (request.get_json(silent=True)['result']['context'][0]['parameters']["sessionId"])
+    for val in request.get_json(silent=True)['result']['contexts']:
+        if val['name'] == 'mysessionid':
+            sid = val['parameters']["sessionId"]
     #print( sid)
     #print( session)
     content = (request.get_json(silent=True)["result"])
     print((content["action"]))
     d = []
-    if sid in session:
-        if content["action"] == "getLunchMenu":
-                return get_lunch_items()
-        if content["action"] == "bookLunch":
-            return bookLunch()
-        if content["action"] == "getSnacksMenu":
-            return get_snacks_items()
-        if content["action"] == "makeACall":
-            return generateResponse("CallConfirmed")
-        if content["action"] == "bookingConfirmed":
-            bookLunch(no=2)
-            return generateResponse("A booking mail has been sent")
-        if content["action"] == "doWebRtcCall":
-            # to do compare here name with the email ID and send email Id a data param
-            return get_mail_id(content)
-        if content["action"] == "trackRequest":
-            return track_request(content)
-        if content["action"] == "requestFacility":
-            return request_facility(content)
-        if content["action"] == "applyLeaves":
-            return apply_leaves(content)
-        if content["action"] == "applyODs":
-            return apply_ods(content)
-        if content["action"] == "getBestWeekend":
-            return get_best_leaves()
-        if content["action"] == "showMap":
-            return openMap(content)
-        if content["action"] == "showMapDefault":
-            return openMapDefault(content) 
-        if content["action"] == "todayMenu":
-            return openMenu(content)
-        if content["action"] == "transitDefault":
-            return openTransitDefault(content)
-        if content["action"] == "transit":
-            return openTransit(content)
-    return "action not recognized"
+    #if sid in session:
+    if content["action"] == "getLunchMenu":
+            return get_lunch_items()
+    if content["action"] == "bookLunch":
+        return bookLunch(sid)
+    if content["action"] == "getSnacksMenu":
+        return get_snacks_items()
+    if content["action"] == "makeACall":
+        return generateResponse("CallConfirmed")
+    if content["action"] == "bookingConfirmed":
+        bookLunch(no=2)
+        return generateResponse("A booking mail has been sent")
+    if content["action"] == "doWebRtcCall":
+        # to do compare here name with the email ID and send email Id a data param
+        return get_mail_id(content)
+    if content["action"] == "trackRequest":
+        return track_request(content)
+    if content["action"] == "requestFacility":
+        return request_facility(content)
+    if content["action"] == "applyLeaves":
+        return apply_leaves(content)
+    if content["action"] == "applyODs":
+        return apply_ods(content)
+    if content["action"] == "getBestWeekend":
+        return get_best_leaves()
+    if content["action"] == "showMap":
+        return openMap(content)
+    if content["action"] == "UMBCMap_default_from":
+        return openMapDefault(content) 
+    if content["action"] == "todayMenu":
+        return openMenu(content)
+    if content["action"] == "transitDefault":
+        return openTransitDefault(content)
+    if content["action"] == "transit":
+        return openTransit(content)
+    #return "action not recognized"
 
 def openTransit(content):
     msg = "Opening Schedule"
@@ -143,7 +145,10 @@ def openTransitDefault(content):
     }
     return generateResponse(msg, source, data)
 def openMenu(content):
-    msg = 'Opening Menu'
+    cursor = mysql.connect().cursor()
+    cursor.execute("select items from lunch_items where items_date = CURDATE()")
+    items = cursor.fetchone()
+    msg = 'We have '+items[0]
     source = 'menu'
     data = {
         "in": content["parameters"]["in"]
@@ -152,7 +157,7 @@ def openMenu(content):
 
 def openMapDefault(content):
     msg = 'Opening Map'
-    source = "map"
+    source = "mapDefault"
     data = {
         "to": content["parameters"]["to"]
     }
@@ -178,6 +183,7 @@ def generateResponse(msg, source, resData):
         data["source"] = source
         if (resData):
             data["data"] = resData
+    print("sending data {}".format(data))
     return jsonify(data)
 
 
@@ -186,7 +192,7 @@ def bookLunch(sessionId):
   cursor = mysql.connect().cursor()
   cursor.execute("select items from lunch_items where items_date = CURDATE()")
   items = cursor.fetchone()
-  user_id = session[sessionId]["user_id"]
+  user_id = sessionId;
   print( items)
   order = {"timestamp": time.time(),"items":items[0], "num": 1}
   userData = mongo.findRecord("food_orders",{"user_id" : user_id})
@@ -195,7 +201,7 @@ def bookLunch(sessionId):
       mongo.update_order("food_orders",order,user_id)
   else:
       mongo.insertRecord("food_orders",{"emp_id" : user_id,"orders":[order]})
-  send_mail({'to':session[sessionId]['email']}, 'Lunch booking confirmation', 'Your lunch has been booked', 'facilities@gslab.com')
+  #send_mail({'to':session}, 'Lunch booking confirmation', 'Your lunch has been booked', 'sswapnil.1993@gmail.com')
   return generateResponse("Lunch has been booked! Hope you enjoy as always.", "", {})
 
 def get_lunch_items():
